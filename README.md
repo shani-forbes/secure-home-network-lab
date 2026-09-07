@@ -27,6 +27,14 @@ This project documents the design, deployment, segmentation, security, troublesh
 | IoT | 20 | 192.168.20.0/24 | Smart and IoT devices |
 | Guest | 30 | 192.168.30.0/24 | Guest connectivity |
 
+### VLAN Configuration
+
+The gateway was configured with four separate VLANs, each with its own subnet and DHCP scope.
+
+![Omada VLAN configuration showing Management, Trusted, IoT, and Guest networks](assets/vlan-configuration.png)
+
+*Figure 2 — VLAN configuration in the Omada controller. Device identifiers have been redacted.*
+
 ## Network Architecture
 
 The network uses a segmented VLAN design with centralized routing and access control at the gateway. Both wireless access points broadcast the same SSIDs, allowing clients to connect through either the upstairs or downstairs AP while maintaining the same VLAN assignment and security policy.
@@ -133,6 +141,14 @@ Both access points broadcast the same SSIDs, so devices can associate with eithe
 
 This means physical location does not determine the security zone. The SSID and VLAN assignment do.
 
+### Wireless Network Mapping
+
+Each wireless SSID was mapped to its corresponding VLAN so that devices are placed into the appropriate network based on the SSID they join.
+
+![Omada SSID configuration showing wireless networks mapped to VLANs](assets/ssid-vlan-mapping.PNG)
+
+*Figure 3 — SSID-to-VLAN mapping for the Trusted, Guest, and IoT wireless networks.*
+
 ## Why Segmentation Alone Wasn't Enough
 
 Creating separate VLANs was only the first step.
@@ -169,6 +185,14 @@ I created the following gateway ACL rules:
 Internet access from the IoT network remained available.
 
 This limits the potential impact of a compromised or insecure IoT device by preventing it from using the IoT network as a path to more sensitive parts of the environment.
+
+### Gateway Access Control
+
+To enforce the intended security boundaries, I configured gateway ACL rules to deny traffic from the IoT network to both the Trusted and Management networks.
+
+![Omada Gateway ACL rules blocking IoT access to Trusted and Management networks](assets/gateway-acl-rules.PNG)
+
+*Figure 4 — Gateway ACL rules denying IoT-to-Trusted and IoT-to-Management traffic.*
 
 ### Guest Isolation
 
@@ -250,6 +274,14 @@ I repeated the process for the Management network after applying the second ACL.
 **Result: PASS**
 
 This confirmed that IoT devices could no longer initiate connections to the Management network.
+
+### Before & After Validation
+
+To verify that the ACLs were actually enforcing the intended security boundaries, I compared connectivity before and after the rules were applied.
+
+![Before and after validation showing IoT traffic blocked from Trusted and Management networks](assets/security-validation.PNG)
+
+*Figure 5 — Before-and-after connectivity testing. Prior to the ACLs, the IoT client could reach both target networks. After the ACLs were applied, both tests resulted in 100% packet loss while internet connectivity remained available.*
 
 ### Testing Guest Isolation
 
