@@ -148,3 +148,45 @@ It became:
 **What does this device actually need to access?**
 
 That principle guided the firewall and ACL rules implemented next.
+
+## Implementing Access Controls
+
+Creating separate VLANs provided logical segmentation, but the gateway was still capable of routing traffic between those networks.
+
+To turn that segmentation into an actual security boundary, I implemented gateway ACLs based on least privilege.
+
+### IoT Access Controls
+
+IoT devices need internet connectivity for normal operation, but there was no reason for them to initiate connections to personal devices or network infrastructure.
+
+I created the following gateway ACL rules:
+
+| Source | Destination | Action |
+|---|---|---|
+| IoT — VLAN 20 | Trusted — VLAN 10 | Deny |
+| IoT — VLAN 20 | Management — VLAN 1 | Deny |
+
+Internet access from the IoT network remained available.
+
+This limits the potential impact of a compromised or insecure IoT device by preventing it from using the IoT network as a path to more sensitive parts of the environment.
+
+### Guest Isolation
+
+For the Guest network, I enabled Omada's built-in Guest Network isolation.
+
+This allows guest devices to access the internet while preventing them from accessing private internal networks.
+
+Rather than adding redundant ACLs that duplicated the same behavior, I used the platform's existing guest isolation control and validated that it produced the intended result.
+
+### Applying Least Privilege
+
+The goal was not to block traffic simply because I could.
+
+For each network, I considered what its devices actually needed in order to function.
+
+- **Trusted devices** require normal internet access and may need access to selected internal resources.
+- **IoT devices** require internet access but do not need to initiate connections to Trusted or Management networks.
+- **Guest devices** require internet access but should not have access to internal networks.
+- **Management** is reserved for network infrastructure and administration.
+
+This shifted the design from simply separating devices into different subnets to actively controlling communication between different trust zones.
