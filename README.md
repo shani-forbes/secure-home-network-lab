@@ -33,3 +33,30 @@ The network uses a segmented VLAN design with centralized routing and access con
 
 ![Home Network Architecture](assets/home-network-architecture.png.PNG)
 
+## Environment & Technologies
+
+The lab was built using a mix of physical networking hardware, self-hosted management software, and client devices across two physical locations.
+
+### Core Infrastructure
+
+- **TP-Link Omada ER707-M2** — gateway, firewall, VLAN routing, DHCP, NAT, and ACL enforcement
+- **2 × TP-Link Omada EAP720** — Wi-Fi 7 access points
+  - Upstairs AP connected directly to the gateway
+  - Downstairs AP connected to the upstairs AP using wireless mesh backhaul
+- **Synology NAS** — located at a separate physical site
+- **Docker / Synology Container Manager** — used to host the Omada Software Controller
+- **Omada Software Controller** — centralized management for the gateway and access points
+- **Mac workstation** — used for configuration, troubleshooting, and network validation
+- **iPhone** — used to test DHCP assignment, internet access, and inter-VLAN restrictions
+
+## Self-Hosting the Omada Controller
+
+Rather than purchasing a dedicated hardware controller, I chose to self-host the Omada Software Controller on an existing Synology NAS using Docker.
+
+This added complexity to the project because the NAS was not located on the same local network as the Omada gateway and access points. As a result, the controller could not rely on normal Layer 2 discovery to find and adopt the devices.
+
+The controller deployment also required troubleshooting several container-related issues, including directory mappings, persistent storage, startup errors, and rebuilding the container after correcting the data and log volume configuration.
+
+Once the controller was running successfully, I used remote adoption and Omada cloud connectivity to bring the gateway and access points under centralized management.
+
+This part of the project reinforced an important lesson: deploying a management platform is not just about getting the software to start. The controller has to be reachable, persistent, and correctly integrated with the network it manages.
