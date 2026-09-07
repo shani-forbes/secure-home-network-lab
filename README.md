@@ -29,4 +29,7 @@ This project documents the design, deployment, segmentation, security, troublesh
 
 ## Network Architecture
 
-*Architecture diagram coming next.*
+The network uses a segmented VLAN design with centralized routing and access control at the gateway. Both wireless access points broadcast the same SSIDs, allowing clients to connect through either the upstairs or downstairs AP while maintaining the same VLAN assignment and security policy.
+
+![Home Network Architecture](assets/home-network-architecture.png.PNG)
+
