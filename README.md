@@ -280,3 +280,90 @@ The most useful part of this testing was comparing behavior before and after the
 
 Rather than assuming that segmentation or an ACL was working because it appeared correctly in the management interface, I established a baseline, implemented the control, repeated the test, and compared the results.
 
+## Troubleshooting & Lessons Learned
+
+Some of the most valuable parts of this project came from the things that did not work the first time.
+
+### 1. Remote Controller Adoption
+
+The Omada Software Controller was hosted on a Synology NAS at a separate physical location from the network being managed.
+
+Initially, I expected the controller to discover the Omada devices automatically. However, normal discovery relies on the controller and devices being reachable through the appropriate local network mechanisms, and my controller was not on the same Layer 2 network.
+
+This required me to distinguish between local discovery and remote management and work through remote adoption and Omada cloud connectivity instead.
+
+**Lesson learned:** Physical and logical network placement matters when deploying management infrastructure. A service can be running correctly while still being unable to discover or communicate with the devices it is intended to manage.
+
+### 2. Container Deployment and Persistent Storage
+
+Self-hosting the controller introduced another troubleshooting challenge.
+
+During the initial Docker deployment, the controller experienced startup and logging problems related to its directory and volume mappings. I reviewed the container configuration, corrected the data and log mappings, and rebuilt the deployment.
+
+This gave me practical experience troubleshooting a containerized application rather than treating the container as a black box.
+
+**Lesson learned:** A running container is only one part of a successful deployment. Storage mappings, persistence, logs, networking, and application configuration all need to be considered.
+
+### 3. VLANs Do Not Automatically Provide Isolation
+
+After creating the Trusted, IoT, and Guest VLANs, I initially tested communication between them.
+
+The IoT client could still reach devices on both the Trusted and Management networks.
+
+The VLANs were working correctly—the devices were on different subnets—but the gateway was routing between those networks.
+
+That distinction became one of the most important lessons from the project.
+
+**Lesson learned:** Segmentation and access control are related but different concepts. VLANs create logical network boundaries; firewall or ACL policies determine what traffic is permitted to cross those boundaries.
+
+### 4. Understanding the Test Path
+
+While validating the ACLs, my Mac had both Wi-Fi and wired Ethernet active.
+
+The Wi-Fi interface was connected to the Trusted network while the wired interface was connected to the Management network. This meant the same physical computer had addresses in two different security zones.
+
+That forced me to pay closer attention to which IP address and interface I was actually testing rather than thinking only in terms of "pinging my Mac."
+
+**Lesson learned:** A meaningful network test requires understanding the complete traffic path—source interface, source network, destination interface, destination network, routing, and the security controls in between.
+
+### 5. Validate the Control, Not the Configuration Screen
+
+One of the biggest takeaways from the project was that seeing a rule marked `Deny` in a management interface does not prove that the rule works.
+
+For the IoT restrictions, I first established that cross-VLAN communication was possible. I then implemented the ACL, repeated the same test, and observed that the traffic was blocked while internet connectivity remained available.
+
+The process became:
+
+**Establish baseline → Implement control → Retest → Verify expected behavior**
+
+That validation approach is something I plan to carry into future security and cloud projects.
+
+## What I Learned
+
+This project turned several concepts I had studied for Security+ into things I could observe and troubleshoot in a real environment.
+
+I gained practical experience with:
+
+- Network segmentation using VLANs
+- IPv4 subnetting and DHCP scopes
+- Inter-VLAN routing
+- Gateway ACLs and least-privilege access
+- Wireless SSID-to-VLAN mapping
+- Guest network isolation
+- Docker-based application deployment
+- Remote network management
+- Layer 2 versus routed connectivity
+- Network testing and validation
+- Troubleshooting across multiple network interfaces
+
+More importantly, the project changed how I approach technical problems.
+
+Instead of only asking whether a configuration looks correct, I learned to form a hypothesis, test the expected behavior, interpret the result, and use that evidence to determine what to change next.
+
+## Next Steps
+
+This project focused on applying networking and security fundamentals in a physical environment.
+
+My next step is to take the same principles into AWS: network segmentation, routing, access control, least privilege, and validation—then compare how those concepts are implemented in a cloud environment.
+
+Security+ gave me the fundamentals. This project gave me somewhere to apply them. AWS is next.
