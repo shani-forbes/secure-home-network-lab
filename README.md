@@ -308,9 +308,7 @@ This validated the behavior of Omada's built-in Guest Network isolation.
 | Guest → Internal networks | Blocked | Pass |
 | Guest → Internet | Allowed | Pass |
 
-The most useful part of this testing was comparing behavior before and after the security controls were applied.
-
-Rather than assuming that segmentation or an ACL was working because it appeared correctly in the management interface, I established a baseline, implemented the control, repeated the test, and compared the results.
+The most useful part of this testing was comparing behavior before and after the security controls were applied rather than relying solely on the configuration shown in the management interface.
 
 ## Troubleshooting & Lessons Learned
 
