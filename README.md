@@ -190,3 +190,93 @@ For each network, I considered what its devices actually needed in order to func
 - **Management** is reserved for network infrastructure and administration.
 
 This shifted the design from simply separating devices into different subnets to actively controlling communication between different trust zones.
+
+
+## Testing & Validation
+
+A configuration showing a `Deny` rule is not enough to prove that a security control is working.
+
+After implementing the VLANs and ACLs, I tested the network from client devices to verify three things:
+
+1. Devices were receiving addresses from the correct VLAN.
+2. Restricted traffic could no longer cross security boundaries.
+3. Internet connectivity continued to work after the restrictions were applied.
+
+### Validating VLAN Assignment
+
+I connected an iPhone to each wireless network and verified the DHCP-assigned IP address and default gateway.
+
+| Network | Expected Subnet | Observed Address | Result |
+|---|---|---|---|
+| Trusted | `192.168.10.0/24` | `192.168.10.102` | Pass |
+| IoT | `192.168.20.0/24` | `192.168.20.100` | Pass |
+| Guest | `192.168.30.0/24` | `192.168.30.100` | Pass |
+
+Each SSID correctly placed the client into its assigned VLAN while maintaining internet connectivity.
+
+### Establishing a Baseline
+
+Before applying the IoT ACLs, I tested whether a device connected to the IoT network could communicate with devices on other VLANs.
+
+The IoT client was able to reach:
+
+- A Mac connected to the Trusted network (`192.168.10.100`)
+- A Mac interface on the Management network (`192.168.0.127`)
+
+This confirmed an important point: creating separate VLANs had divided the network into different subnets, but inter-VLAN routing was still allowing communication between them.
+
+### Testing IoT → Trusted
+
+I then applied the ACL denying traffic from IoT (VLAN 20) to Trusted (VLAN 10).
+
+I repeated the same connectivity test.
+
+**Before ACL:** Reachable  
+**After ACL:** 100% packet loss  
+**Internet access:** Still available
+
+**Result: PASS**
+
+The IoT client could no longer initiate communication with a device on the Trusted network without losing the internet connectivity it required.
+
+### Testing IoT → Management
+
+I repeated the process for the Management network after applying the second ACL.
+
+**Before ACL:** Reachable  
+**After ACL:** 100% packet loss  
+**Internet access:** Still available
+
+**Result: PASS**
+
+This confirmed that IoT devices could no longer initiate connections to the Management network.
+
+### Testing Guest Isolation
+
+I also tested a client connected to the Guest SSID.
+
+The client received an address from the Guest subnet and retained internet connectivity, while attempts to reach private internal network addresses were unsuccessful.
+
+**Result: PASS**
+
+This validated the behavior of Omada's built-in Guest Network isolation.
+
+### Validation Summary
+
+| Test | Expected Result | Observed Result |
+|---|---|---|
+| Trusted client receives VLAN 10 address | `192.168.10.0/24` | Pass |
+| IoT client receives VLAN 20 address | `192.168.20.0/24` | Pass |
+| Guest client receives VLAN 30 address | `192.168.30.0/24` | Pass |
+| IoT → Trusted before ACL | Reachable | Pass |
+| IoT → Trusted after ACL | Blocked | Pass |
+| IoT → Management before ACL | Reachable | Pass |
+| IoT → Management after ACL | Blocked | Pass |
+| IoT → Internet after ACL | Allowed | Pass |
+| Guest → Internal networks | Blocked | Pass |
+| Guest → Internet | Allowed | Pass |
+
+The most useful part of this testing was comparing behavior before and after the security controls were applied.
+
+Rather than assuming that segmentation or an ACL was working because it appeared correctly in the management interface, I established a baseline, implemented the control, repeated the test, and compared the results.
+
